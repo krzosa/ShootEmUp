@@ -5,5 +5,5 @@ set FLAGS=/Od /Zi /DEBUG /nologo
 set EXE_NAME=/Fe: "Game"
 
 cd ..\bin
-cl ..\src\main.c %EXE_NAME% %FLAGS% %LIBS%
+cl ..\src\main.cpp %EXE_NAME% %FLAGS% %LIBS%
 cd ..\src
