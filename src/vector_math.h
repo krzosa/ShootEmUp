@@ -1,4 +1,12 @@
-#include "include/raylib.h"
+#pragma once
+
+#if KRZ_STANDALONE
+struct Vector2
+{
+    float x;
+    float y;
+};
+#endif
 
 inline static Vector2 operator*(const Vector2 a, const float scalar)
 {
