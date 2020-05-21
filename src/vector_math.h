@@ -35,3 +35,12 @@ inline static Vector2 operator-(const Vector2 a)
 
     return result;
 }
+
+float clampFloat(float val, float min, float max)
+{
+    if (val > max)
+        return max;
+    else if (val < min)
+        return min;
+    return val;
+}
