@@ -83,6 +83,30 @@ static void CreateEnemyRandomized(std::list<Entity> *enemies)
     enemies->push_front(enemy);
 }
 
+static void CreateDeathParticles(std::list<Entity> *list, int posx, int posy)
+{
+    for (int i = 1; i < 11; i++)
+    {
+        float accelerationy = -1 * i;
+        if (i % 2)
+        {
+            accelerationy = 1 * i;
+        }
+        float accelerationx = GetRandomValue(-1, 1) * i;
+        Entity bullet = {};
+        {
+            bullet.pos.x = posx;
+            bullet.pos.y = posy;
+            bullet.acceleration = {accelerationx, accelerationy};
+            bullet.color = {200, 100, 0, 255};
+            bullet.size = {(float)GetRandomValue(5, 25), (float)GetRandomValue(5, 25)};
+            bullet.speed = 7000.0f;
+            bullet.type = PLAYER_BULLET;
+        }
+        list->push_back(bullet);
+    }
+}
+
 static bool EntityIsOnScreen(Entity *entity, int screenWidth, int screenHeight)
 {
     int padding = 200;

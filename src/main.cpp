@@ -39,6 +39,7 @@ int main()
             if (EntitiesCollide(*enemy, player))
             {
                 player.state = DEAD;
+                CreateDeathParticles(&bullets, player.pos.x - player.size.x, player.pos.y - player.size.y);
             }
         }
 
@@ -82,13 +83,19 @@ int main()
             EntityListDraw(&bullets);
             EntityListDraw(&enemies);
 
-            Color color = {160, 160, 160, 200};
+            Color uicolor = {160, 160, 160, 200};
             Rectangle scoreBox = {SCREEN_WIDTH / 2 - 50, 0, 300, 100};
-            DrawTextRec(GetFontDefault(), TextFormat("%d", score), scoreBox, 100, 10, 0, color);
+            DrawTextRec(GetFontDefault(), TextFormat("%d", score), scoreBox, 100, 10, 0, uicolor);
 
             if (showFps)
             {
                 DrawFPS(0, 0);
+            }
+
+            if (player.state == DEAD)
+            {
+                Rectangle scoreBox = {SCREEN_WIDTH / 2 - 500, 600, 1000, 100};
+                DrawTextRec(GetFontDefault(), TextFormat("R to restart"), scoreBox, 100, 10, 0, uicolor);
             }
         }
         EndDrawing();
