@@ -4,64 +4,37 @@
 #include <math.h>
 #include <list>
 
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
+/* DEBUGGING CHECKLIST
+maybe pointer got erased twice? (especially in a container) 
 
-static void SpawnEnemy(std::list<Entity> *enemies)
-{
-    float posx = GetRandomValue(-200, SCREEN_WIDTH + 200);
-    float speed = GetRandomValue(1000, 2000);
-
-    Entity enemy = {};
-    {
-        enemy.size = {(float)GetRandomValue(50, 100), (float)GetRandomValue(25, 50)};
-        enemy.color = {200, (unsigned char)GetRandomValue(50, 150), 0, 255};
-        enemy.acceleration = {-1, 1};
-        enemy.speed = speed;
-        enemy.pos = {posx, 0};
-    }
-
-    enemies->push_front(enemy);
-}
+ */
 
 int main()
 {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Shoot'em up");
     SetTargetFPS(60);
 
-    Entity player = {};
-    {
-        player.pos = {100, 100};
-        player.size = {25, 25};
-        player.color = {0, 150, 150, 255};
-        player.speed = 7000.0f;
-    }
+    bool showFps = 0;
+    unsigned int score = 0;
+
+    Entity player = CreatePlayer();
 
     std::list<Entity> bullets = {};
     std::list<Entity> enemies = {};
 
     while (!WindowShouldClose())
     {
-        if (IsKeyPressed(KEY_R))
-        {
-
-            SpawnEnemy(&enemies);
-            SpawnEnemy(&enemies);
-            SpawnEnemy(&enemies);
-            SpawnEnemy(&enemies);
-            SpawnEnemy(&enemies);
-            SpawnEnemy(&enemies);
-            SpawnEnemy(&enemies);
-            SpawnEnemy(&enemies);
-            SpawnEnemy(&enemies);
-        }
-
-        if (player.state == ALIVE)
-            PlayerUpdate(&player, &bullets);
+        if (player.state != DEAD)
+            EntityUpdate(&player, &bullets);
 
         for (std::list<Entity>::iterator enemy = enemies.begin(); enemy != enemies.end(); ++enemy)
         {
-            EntityUpdate(&*enemy);
+            EntityUpdate(&*enemy, &bullets);
+
+            if (!EntityIsOnScreen(&*enemy, SCREEN_WIDTH, SCREEN_HEIGHT))
+            {
+                enemies.erase(enemy);
+            }
 
             if (EntitiesCollide(*enemy, player))
             {
@@ -71,12 +44,13 @@ int main()
 
         for (std::list<Entity>::iterator bullet = bullets.begin(); bullet != bullets.end(); ++bullet)
         {
-            EntityUpdate(&*bullet);
+            EntityUpdate(&*bullet, &bullets);
+            bool erase = false;
 
             // delete out of bounds bullets
             if (!EntityIsOnScreen(&*bullet, SCREEN_WIDTH, SCREEN_HEIGHT))
             {
-                bullets.erase(bullet);
+                erase = true;
             }
 
             // colliding with enemies
@@ -84,28 +58,79 @@ int main()
             {
                 if (EntitiesCollide(*bullet, *enemy))
                 {
-                    // TODO: Heap corruption I think this invalidates all the pointers
-                    // it had, so we need to connect them to something else? or maybe use vectors
-                    // dont know
-                    bullets.erase(bullet);
                     enemies.erase(enemy);
+                    erase = true;
+                    score += 10;
                 }
             }
+
+            if (erase == true)
+                bullets.erase(bullet);
         }
+
+        // EntitiesUpdate(&enemies, &bullets);
+
+        TraceLog(LOG_TRACE, "enemies size: %d", enemies.size());
+        TraceLog(LOG_TRACE, "bullets size: %d", bullets.size());
 
         BeginDrawing();
         {
             ClearBackground(RAYWHITE);
 
-            if (player.state == ALIVE)
+            if (player.state != DEAD)
                 EntityDraw(&player);
             EntityListDraw(&bullets);
             EntityListDraw(&enemies);
-            // TraceLog(LOG_INFO, "cap: %d", bullets.size());
 
-            DrawFPS(0, 0);
+            Color color = {160, 160, 160, 200};
+            Rectangle scoreBox = {SCREEN_WIDTH / 2 - 50, 0, 300, 100};
+            DrawTextRec(GetFontDefault(), TextFormat("%d", score), scoreBox, 100, 10, 0, color);
+
+            if (showFps)
+            {
+                DrawFPS(0, 0);
+            }
         }
         EndDrawing();
+
+        // debug input stuff
+        {
+            if (IsKeyPressed(KEY_F1))
+            {
+                SetTraceLogLevel(LOG_DEBUG);
+            }
+            else if (IsKeyPressed(KEY_F2))
+            {
+                SetTraceLogLevel(LOG_TRACE);
+            }
+            else if (IsKeyPressed(KEY_F3))
+            {
+                SetTraceLogLevel(LOG_INFO);
+            }
+
+            if (IsKeyPressed(KEY_F4))
+            {
+                showFps = !showFps;
+            }
+
+            if (IsKeyDown(KEY_ONE))
+            {
+                CreateEnemyRandomized(&enemies);
+                CreateEnemyRandomized(&enemies);
+                CreateEnemyRandomized(&enemies);
+                CreateEnemyRandomized(&enemies);
+                CreateEnemyRandomized(&enemies);
+                CreateEnemyRandomized(&enemies);
+                CreateEnemyRandomized(&enemies);
+                CreateEnemyRandomized(&enemies);
+                CreateEnemyRandomized(&enemies);
+            }
+
+            if (IsKeyDown(KEY_R))
+            {
+                player.state = ALIVE;
+            }
+        }
     }
     CloseWindow();
 

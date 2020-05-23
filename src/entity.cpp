@@ -7,8 +7,8 @@
 
 enum EntityType
 {
-    PLAYER,
     ENEMY,
+    PLAYER,
     PLAYER_BULLET,
     ENEMY_BULLET,
 };
@@ -31,54 +31,65 @@ struct Entity
     Color color;
 };
 
-static void PlayerUpdate(Entity *player, std::list<Entity> *bullets)
+static Entity CreatePlayer()
 {
-    player->acceleration = {0, 0};
-    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
+    Entity player = {};
     {
-        player->acceleration.y = -1.0f;
+        player.pos = {600, 600};
+        player.size = {25, 25};
+        player.color = {0, 160, 200, 255};
+        player.speed = 7000.0f;
+        player.type = PLAYER;
+        player.state = ALIVE;
     }
-    else if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))
-    {
-        player->acceleration.y = 1.0f;
-    }
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
-    {
-        player->acceleration.x = -1.0f;
-    }
-    else if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
-    {
-        player->acceleration.x = 1.0f;
-    }
-    player->acceleration = player->acceleration * player->speed;
-    float dtime = GetFrameTime();
+    return player;
+}
 
-    player->acceleration = player->acceleration - player->velocity * 8;
+static Entity CreateBullet(float posx, float posy, EntityType type)
+{
+    unsigned char colorB = 120;
+    unsigned char colorG = 150;
 
-    player->pos = player->acceleration * (dtime * dtime) + player->velocity * dtime + player->pos;
-    player->velocity = player->acceleration * dtime + player->velocity;
-
-    player->pos.x = clampFloat(player->pos.x, 0, SCREEN_WIDTH - player->size.x);
-    player->pos.y = clampFloat(player->pos.y, 0, SCREEN_HEIGHT - player->size.y);
-
-    if (IsKeyDown(KEY_O))
+    Entity bullet = {};
     {
-        Entity bullet = {};
-        bullet.pos.x = player->pos.x + player->size.x / 2;
-        bullet.pos.y = player->pos.y;
+        bullet.pos.x = posx;
+        bullet.pos.y = posy;
         bullet.acceleration = {0, -1};
-        bullet.color = {255, 0, 0, 255};
+        bullet.color = {0, colorG, colorB, 255};
         bullet.size = {10, 10};
         bullet.speed = 10000;
-        bullets->push_back(bullet);
+        bullet.type = type;
     }
+    return bullet;
+}
+
+static void CreateEnemyRandomized(std::list<Entity> *enemies)
+{
+    float posx = GetRandomValue(-200, SCREEN_WIDTH + 200);
+    float speed = GetRandomValue(1000, 2000);
+    unsigned char color = GetRandomValue(50, 150);
+    float accelerationX = GetRandomValue(-1, 1);
+
+    Entity enemy = {};
+    {
+        enemy.size = {(float)GetRandomValue(50, 100), (float)GetRandomValue(25, 50)};
+        enemy.color = {200, color, 0, 255};
+        enemy.acceleration = {accelerationX, 1};
+        enemy.speed = speed;
+        enemy.pos = {posx, -enemy.size.y};
+        enemy.type = ENEMY;
+    }
+
+    enemies->push_front(enemy);
 }
 
 static bool EntityIsOnScreen(Entity *entity, int screenWidth, int screenHeight)
 {
-    if (entity->pos.x > screenWidth || entity->pos.x < 0)
+    int padding = 200;
+
+    if (entity->pos.x > screenWidth + padding || entity->pos.x < 0 - padding)
         return false;
-    if (entity->pos.y > screenHeight || entity->pos.y < 0)
+    if (entity->pos.y > screenHeight + padding || entity->pos.y < 0 - padding)
         return false;
     return true;
 }
@@ -94,19 +105,103 @@ bool EntitiesCollide(Entity entity1, Entity entity2)
     return collision;
 }
 
-static void EntityUpdate(Entity *entity)
+static void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
 {
-    if (entity->pos.x < 0)
-        entity->acceleration.x = 1;
-    if (entity->pos.x > SCREEN_WIDTH - entity->size.x)
-        entity->acceleration.x = -1;
-    Vector2 acceleration = entity->acceleration * entity->speed;
-    float dtime = GetFrameTime();
+    if (entity->type == PLAYER)
+    {
+        Entity *player = entity;
 
-    acceleration = acceleration - entity->velocity * 4;
+        player->acceleration = {0, 0};
+        if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
+        {
+            player->acceleration.y = -1.0f;
+        }
+        else if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))
+        {
+            player->acceleration.y = 1.0f;
+        }
+        if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
+        {
+            player->acceleration.x = -1.0f;
+        }
+        else if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
+        {
+            player->acceleration.x = 1.0f;
+        }
+        player->acceleration = player->acceleration * player->speed;
+        float dtime = GetFrameTime();
 
-    entity->pos = acceleration * (dtime * dtime) + entity->velocity * dtime + entity->pos;
-    entity->velocity = acceleration * dtime + entity->velocity;
+        player->acceleration = player->acceleration - player->velocity * 8;
+
+        player->pos = player->acceleration * (dtime * dtime) + player->velocity * dtime + player->pos;
+        player->velocity = player->acceleration * dtime + player->velocity;
+
+        player->pos.x = clampFloat(player->pos.x, 0, SCREEN_WIDTH - player->size.x);
+        player->pos.y = clampFloat(player->pos.y, 0, SCREEN_HEIGHT - player->size.y);
+
+        if (IsKeyDown(KEY_O))
+        {
+            bullets->push_back(CreateBullet(player->pos.x + player->size.x / 2, player->pos.y, PLAYER_BULLET));
+        }
+    }
+    else
+    {
+        if (entity->pos.x < 0)
+            entity->acceleration.x = 1;
+        if (entity->pos.x > SCREEN_WIDTH - entity->size.x)
+            entity->acceleration.x = -1;
+        Vector2 acceleration = entity->acceleration * entity->speed;
+        float dtime = GetFrameTime();
+
+        acceleration = acceleration - entity->velocity * 4;
+
+        entity->pos = acceleration * (dtime * dtime) + entity->velocity * dtime + entity->pos;
+        entity->velocity = acceleration * dtime + entity->velocity;
+    }
+}
+
+static void EntitiesUpdate(std::list<Entity> *entities, std::list<Entity> *bullets)
+{
+    Entity *player = &*entities->begin();
+    for (std::list<Entity>::iterator entity = entities->begin(); entity != entities->end(); ++entity)
+    {
+        EntityUpdate(&*entity, bullets);
+
+        if (!EntityIsOnScreen(&*entity, SCREEN_WIDTH, SCREEN_HEIGHT))
+        {
+            entities->erase(entity);
+        }
+
+        if (EntitiesCollide(*entity, *player))
+        {
+            player->state = DEAD;
+        }
+    }
+
+    for (std::list<Entity>::iterator bullet = bullets->begin(); bullet != bullets->end(); ++bullet)
+    {
+        EntityUpdate(&*bullet, bullets);
+        bool erase = false;
+
+        // delete out of bounds bullets
+        if (!EntityIsOnScreen(&*bullet, SCREEN_WIDTH, SCREEN_HEIGHT))
+        {
+            erase = true;
+        }
+
+        // colliding with enemies
+        for (std::list<Entity>::iterator entity = entities->begin(); entity != entities->end(); ++entity)
+        {
+            if (EntitiesCollide(*bullet, *entity))
+            {
+                entities->erase(entity);
+                erase = true;
+            }
+        }
+
+        if (erase == true)
+            bullets->erase(bullet);
+    }
 }
 
 static void EntityDraw(Entity *entity)
