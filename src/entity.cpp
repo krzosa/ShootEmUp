@@ -58,6 +58,7 @@ static Entity CreateBullet(float posx, float posy, EntityType type)
         bullet.color = {0, colorG, colorB, 255};
         bullet.size = {10, 10};
         bullet.speed = 10000;
+        bullet.state = ALIVE;
         bullet.type = type;
     }
     return bullet;
@@ -101,6 +102,7 @@ static void CreateDeathParticles(std::list<Entity> *list, int posx, int posy)
             bullet.color = {200, 100, 0, 255};
             bullet.size = {(float)GetRandomValue(5, 25), (float)GetRandomValue(5, 25)};
             bullet.speed = 7000.0f;
+            bullet.state = ALIVE;
             bullet.type = PLAYER_BULLET;
         }
         list->push_back(bullet);
@@ -131,6 +133,12 @@ bool EntitiesCollide(Entity entity1, Entity entity2)
 
 static void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
 {
+    float dtime = GetFrameTime();
+#if DEBUG
+    if (IsKeyDown(KEY_P))
+        dtime = 0;
+#endif
+
     if (entity->type == PLAYER)
     {
         Entity *player = entity;
@@ -153,7 +161,6 @@ static void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
             player->acceleration.x = 1.0f;
         }
         player->acceleration = player->acceleration * player->speed;
-        float dtime = GetFrameTime();
 
         player->acceleration = player->acceleration - player->velocity * 8;
 
@@ -175,56 +182,11 @@ static void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
         if (entity->pos.x > SCREEN_WIDTH - entity->size.x)
             entity->acceleration.x = -1;
         Vector2 acceleration = entity->acceleration * entity->speed;
-        float dtime = GetFrameTime();
 
         acceleration = acceleration - entity->velocity * 4;
 
         entity->pos = acceleration * (dtime * dtime) + entity->velocity * dtime + entity->pos;
         entity->velocity = acceleration * dtime + entity->velocity;
-    }
-}
-
-static void EntitiesUpdate(std::list<Entity> *entities, std::list<Entity> *bullets)
-{
-    Entity *player = &*entities->begin();
-    for (std::list<Entity>::iterator entity = entities->begin(); entity != entities->end(); ++entity)
-    {
-        EntityUpdate(&*entity, bullets);
-
-        if (!EntityIsOnScreen(&*entity, SCREEN_WIDTH, SCREEN_HEIGHT))
-        {
-            entities->erase(entity);
-        }
-
-        if (EntitiesCollide(*entity, *player))
-        {
-            player->state = DEAD;
-        }
-    }
-
-    for (std::list<Entity>::iterator bullet = bullets->begin(); bullet != bullets->end(); ++bullet)
-    {
-        EntityUpdate(&*bullet, bullets);
-        bool erase = false;
-
-        // delete out of bounds bullets
-        if (!EntityIsOnScreen(&*bullet, SCREEN_WIDTH, SCREEN_HEIGHT))
-        {
-            erase = true;
-        }
-
-        // colliding with enemies
-        for (std::list<Entity>::iterator entity = entities->begin(); entity != entities->end(); ++entity)
-        {
-            if (EntitiesCollide(*bullet, *entity))
-            {
-                entities->erase(entity);
-                erase = true;
-            }
-        }
-
-        if (erase == true)
-            bullets->erase(bullet);
     }
 }
 

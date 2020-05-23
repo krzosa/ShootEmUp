@@ -27,31 +27,34 @@ int main()
         if (player.state != DEAD)
             EntityUpdate(&player, &bullets);
 
+        // update enemies, check collisions with player, check if on screen
         for (std::list<Entity>::iterator enemy = enemies.begin(); enemy != enemies.end(); ++enemy)
         {
             EntityUpdate(&*enemy, &bullets);
 
             if (!EntityIsOnScreen(&*enemy, SCREEN_WIDTH, SCREEN_HEIGHT))
             {
-                enemies.erase(enemy);
+                enemy->state = DEAD;
             }
 
-            if (EntitiesCollide(*enemy, player))
+            if (EntitiesCollide(*enemy, player) && player.state != DEAD)
             {
                 player.state = DEAD;
                 CreateDeathParticles(&bullets, player.pos.x - player.size.x, player.pos.y - player.size.y);
             }
+            if (enemy->state == DEAD)
+                enemies.erase(enemy);
         }
 
+        // update enemies, check if out of bounds, check if collides with enemies
         for (std::list<Entity>::iterator bullet = bullets.begin(); bullet != bullets.end(); ++bullet)
         {
             EntityUpdate(&*bullet, &bullets);
-            bool erase = false;
 
             // delete out of bounds bullets
             if (!EntityIsOnScreen(&*bullet, SCREEN_WIDTH, SCREEN_HEIGHT))
             {
-                erase = true;
+                bullet->state = DEAD;
             }
 
             // colliding with enemies
@@ -60,16 +63,14 @@ int main()
                 if (EntitiesCollide(*bullet, *enemy))
                 {
                     enemies.erase(enemy);
-                    erase = true;
+                    bullet->state = DEAD;
                     score += 10;
                 }
             }
 
-            if (erase == true)
+            if (bullet->state == DEAD)
                 bullets.erase(bullet);
         }
-
-        // EntitiesUpdate(&enemies, &bullets);
 
         TraceLog(LOG_TRACE, "enemies size: %d", enemies.size());
         TraceLog(LOG_TRACE, "bullets size: %d", bullets.size());
@@ -100,7 +101,7 @@ int main()
         }
         EndDrawing();
 
-        // debug input stuff
+        // check for inputs and show debug stuff
         {
             if (IsKeyPressed(KEY_F1))
             {

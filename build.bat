@@ -1,7 +1,7 @@
 @echo off
 
 set LIBS=/link ..\lib\raylib.lib kernel32.lib user32.lib shell32.lib winmm.lib gdi32.lib opengl32.lib
-set FLAGS=/Od /Zi /nologo /std:c++17 /EHsc
+set FLAGS=/Od /Zi /nologo /std:c++17 /EHsc -DDEBUG=1
 set EXE_NAME=/Fe: "Game"
 
 cd bin
