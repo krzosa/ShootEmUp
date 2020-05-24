@@ -3,30 +3,52 @@
 #include "entity.cpp"
 #include <math.h>
 #include <list>
+#include <vector>
 
 /* DEBUGGING CHECKLIST
 maybe pointer got erased twice? (especially in a container) 
 
  */
+struct Event
+{
+    double time;
+    bool flag;
+};
+
+struct GameState
+{
+    std::vector<Event> events;
+    double timeToWin;
+    bool showFps;
+    unsigned int score;
+};
 
 int main()
 {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Shoot'em up");
     SetTargetFPS(60);
 
-    bool showFps = 0;
-    unsigned int score = 0;
+    GameState gameState = {};
+    for (int i = 0; i < 20; i++)
+    {
+        gameState.events.push_back({(double)i});
+    }
+    gameState.timeToWin = 23.0f;
 
     Entity player = CreatePlayer();
 
     std::list<Entity> bullets = {};
     std::list<Entity> enemies = {};
 
+    Color uicolor = {160, 160, 160, 200};
+
     while (!WindowShouldClose())
     {
+        double time = GetTime();
+        TraceLog(LOG_INFO, "Time: %f", time);
+
         if (player.state != DEAD)
             EntityUpdate(&player, &bullets);
-
         // update enemies, check collisions with player, check if on screen
         for (std::list<Entity>::iterator enemy = enemies.begin(); enemy != enemies.end(); ++enemy)
         {
@@ -64,7 +86,7 @@ int main()
                 {
                     enemies.erase(enemy);
                     bullet->state = DEAD;
-                    score += 10;
+                    gameState.score += 10;
                 }
             }
 
@@ -84,11 +106,10 @@ int main()
             EntityListDraw(&bullets);
             EntityListDraw(&enemies);
 
-            Color uicolor = {160, 160, 160, 200};
             Rectangle scoreBox = {SCREEN_WIDTH / 2 - 50, 0, 300, 100};
-            DrawTextRec(GetFontDefault(), TextFormat("%d", score), scoreBox, 100, 10, 0, uicolor);
+            DrawTextRec(GetFontDefault(), TextFormat("%d", gameState.score), scoreBox, 100, 10, 0, uicolor);
 
-            if (showFps)
+            if (gameState.showFps)
             {
                 DrawFPS(0, 0);
             }
@@ -118,7 +139,7 @@ int main()
 
             if (IsKeyPressed(KEY_F4))
             {
-                showFps = !showFps;
+                gameState.showFps = !gameState.showFps;
             }
 
             if (IsKeyDown(KEY_ONE))
@@ -137,6 +158,32 @@ int main()
             if (IsKeyDown(KEY_R))
             {
                 player.state = ALIVE;
+            }
+
+            if (time > gameState.timeToWin && player.state != DEAD)
+            {
+                Rectangle scoreBox = {SCREEN_WIDTH / 2 - 500, 600, 1000, 100};
+                DrawTextRec(GetFontDefault(), TextFormat("You won!"), scoreBox, 100, 10, 0, uicolor);
+            }
+        }
+
+        // Events
+        {
+            for (std::vector<Event>::iterator event = gameState.events.begin(); event != gameState.events.end(); ++event)
+            {
+                if (time > event->time && !event->flag)
+                {
+                    CreateEnemyRandomized(&enemies);
+                    CreateEnemyRandomized(&enemies);
+                    CreateEnemyRandomized(&enemies);
+                    CreateEnemyRandomized(&enemies);
+                    CreateEnemyRandomized(&enemies);
+                    CreateEnemyRandomized(&enemies);
+                    CreateEnemyRandomized(&enemies);
+                    CreateEnemyRandomized(&enemies);
+                    CreateEnemyRandomized(&enemies);
+                    event->flag = !event->flag;
+                }
             }
         }
     }
