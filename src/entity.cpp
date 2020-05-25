@@ -1,35 +1,7 @@
 #include "include/raylib.h"
 #include "vector_math.h"
 #include <list>
-
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
-
-enum EntityType
-{
-    ENEMY,
-    PLAYER,
-    PLAYER_BULLET,
-    ENEMY_BULLET,
-};
-
-enum EntityState
-{
-    ALIVE,
-    DEAD,
-};
-
-struct Entity
-{
-    Vector2 pos;
-    Vector2 size;
-    Vector2 velocity;
-    Vector2 acceleration;
-    EntityType type;
-    EntityState state;
-    float speed;
-    Color color;
-};
+#include "game.h"
 
 static Entity CreatePlayer()
 {
@@ -134,10 +106,8 @@ bool EntitiesCollide(Entity entity1, Entity entity2)
 static void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
 {
     float dtime = GetFrameTime();
-#if DEBUG
     if (IsKeyDown(KEY_P))
         dtime = 0;
-#endif
 
     if (entity->type == PLAYER)
     {

@@ -1,191 +1,102 @@
 #include "include/raylib.h"
-#include "vector_math.h"
+#include "game.h"
 #include "entity.cpp"
-#include <math.h>
-#include <list>
-#include <vector>
+/* WIN32 */
+#define _X86_
+#include "libloaderapi.h"
+#include "WinDef.h"
+#include "winbase.h"
+/*  */
 
-/* DEBUGGING CHECKLIST
-maybe pointer got erased twice? (especially in a container) 
-
- */
-struct Event
+#define UPDATE_AND_RENDER(name) void name(GameState *gameState)
+typedef UPDATE_AND_RENDER(UpdateAndRender);
+UPDATE_AND_RENDER(UpdateAndRenderStub)
 {
-    double time;
-    bool flag;
+}
+
+struct win32_game_code
+{
+    HMODULE library;
+    long lastDllWriteTime;
+    UpdateAndRender *UpdateAndRender;
+    bool isValid;
 };
 
-struct GameState
+static win32_game_code Win32LoadGameCode(char *mainDllPath, char *tempDllPath)
 {
-    std::vector<Event> events;
-    double timeToWin;
-    bool showFps;
-    unsigned int score;
-};
+    win32_game_code Result;
+    Result.lastDllWriteTime = GetFileModTime(tempDllPath);
 
-int main()
+    CopyFileA((LPCSTR)mainDllPath, (LPCSTR)tempDllPath, FALSE);
+    Result.library = LoadLibraryA(tempDllPath);
+    TraceLog(LOG_INFO, "Load game code");
+    Result.isValid = 1;
+    if (Result.library)
+    {
+        Result.UpdateAndRender = (UpdateAndRender *)
+            GetProcAddress(Result.library, "UpdateAndRender");
+
+        Result.isValid = (Result.UpdateAndRender != 0);
+    }
+
+    if (Result.isValid == 0)
+    {
+        Result.UpdateAndRender = UpdateAndRenderStub;
+        TraceLog(LOG_INFO, "Failed to load library");
+    }
+
+    TraceLog(LOG_INFO, "GameCode valid? = %d", Result.isValid);
+    return Result;
+}
+
+/* Unloads the dll and nulls the pointers to functions from the dll */
+static void Win32UnloadGameCode(win32_game_code *GameCode)
 {
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Shoot'em up");
-    SetTargetFPS(60);
+    if (GameCode->library)
+    {
+        FreeLibrary(GameCode->library);
+        GameCode->library = 0;
+        GameCode->UpdateAndRender = UpdateAndRenderStub;
+        TraceLog(LOG_INFO, "Unload game code");
+    }
+
+    GameCode->isValid = false;
+}
+
+int main(void)
+{
+    /* building paths to the dll files */
+    const char *basePath = GetWorkingDirectory();
+    char mainDllPath[MAX_PATH];
+    char tempDllPath[MAX_PATH];
+    {
+        strcpy_s(mainDllPath, basePath);
+        strcpy_s(tempDllPath, basePath);
+        strcat_s(mainDllPath, "\\game.dll");
+        strcat_s(tempDllPath, "\\game_temp.dll");
+        TraceLog(LOG_INFO, basePath);
+        TraceLog(LOG_INFO, mainDllPath);
+        TraceLog(LOG_INFO, tempDllPath);
+    }
+
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Game");
+
+    win32_game_code gameCode = {};
+    gameCode = Win32LoadGameCode(mainDllPath, tempDllPath);
 
     GameState gameState = {};
-    for (int i = 0; i < 20; i++)
-    {
-        gameState.events.push_back({(double)i});
-    }
-    gameState.timeToWin = 23.0f;
 
-    Entity player = CreatePlayer();
-
-    std::list<Entity> bullets = {};
-    std::list<Entity> enemies = {};
-
-    Color uicolor = {160, 160, 160, 200};
-
+    SetTargetFPS(60);
     while (!WindowShouldClose())
     {
-        double time = GetTime();
-        TraceLog(LOG_INFO, "Time: %f", time);
-
-        if (player.state != DEAD)
-            EntityUpdate(&player, &bullets);
-        // update enemies, check collisions with player, check if on screen
-        for (std::list<Entity>::iterator enemy = enemies.begin(); enemy != enemies.end(); ++enemy)
+        long dllFileWriteTime = GetFileModTime(mainDllPath);
+        if (dllFileWriteTime != gameCode.lastDllWriteTime)
         {
-            EntityUpdate(&*enemy, &bullets);
-
-            if (!EntityIsOnScreen(&*enemy, SCREEN_WIDTH, SCREEN_HEIGHT))
-            {
-                enemy->state = DEAD;
-            }
-
-            if (EntitiesCollide(*enemy, player) && player.state != DEAD)
-            {
-                player.state = DEAD;
-                CreateDeathParticles(&bullets, player.pos.x - player.size.x, player.pos.y - player.size.y);
-            }
-            if (enemy->state == DEAD)
-                enemies.erase(enemy);
+            Win32UnloadGameCode(&gameCode);
+            gameCode = Win32LoadGameCode(mainDllPath, tempDllPath);
         }
 
-        // update enemies, check if out of bounds, check if collides with enemies
-        for (std::list<Entity>::iterator bullet = bullets.begin(); bullet != bullets.end(); ++bullet)
-        {
-            EntityUpdate(&*bullet, &bullets);
-
-            // delete out of bounds bullets
-            if (!EntityIsOnScreen(&*bullet, SCREEN_WIDTH, SCREEN_HEIGHT))
-            {
-                bullet->state = DEAD;
-            }
-
-            // colliding with enemies
-            for (std::list<Entity>::iterator enemy = enemies.begin(); enemy != enemies.end(); ++enemy)
-            {
-                if (EntitiesCollide(*bullet, *enemy))
-                {
-                    enemies.erase(enemy);
-                    bullet->state = DEAD;
-                    gameState.score += 10;
-                }
-            }
-
-            if (bullet->state == DEAD)
-                bullets.erase(bullet);
-        }
-
-        TraceLog(LOG_TRACE, "enemies size: %d", enemies.size());
-        TraceLog(LOG_TRACE, "bullets size: %d", bullets.size());
-
-        BeginDrawing();
-        {
-            ClearBackground(RAYWHITE);
-
-            if (player.state != DEAD)
-                EntityDraw(&player);
-            EntityListDraw(&bullets);
-            EntityListDraw(&enemies);
-
-            Rectangle scoreBox = {SCREEN_WIDTH / 2 - 50, 0, 300, 100};
-            DrawTextRec(GetFontDefault(), TextFormat("%d", gameState.score), scoreBox, 100, 10, 0, uicolor);
-
-            if (gameState.showFps)
-            {
-                DrawFPS(0, 0);
-            }
-
-            if (player.state == DEAD)
-            {
-                Rectangle scoreBox = {SCREEN_WIDTH / 2 - 500, 600, 1000, 100};
-                DrawTextRec(GetFontDefault(), TextFormat("R to restart"), scoreBox, 100, 10, 0, uicolor);
-            }
-        }
-        EndDrawing();
-
-        // check for inputs and show debug stuff
-        {
-            if (IsKeyPressed(KEY_F1))
-            {
-                SetTraceLogLevel(LOG_DEBUG);
-            }
-            else if (IsKeyPressed(KEY_F2))
-            {
-                SetTraceLogLevel(LOG_TRACE);
-            }
-            else if (IsKeyPressed(KEY_F3))
-            {
-                SetTraceLogLevel(LOG_INFO);
-            }
-
-            if (IsKeyPressed(KEY_F4))
-            {
-                gameState.showFps = !gameState.showFps;
-            }
-
-            if (IsKeyDown(KEY_ONE))
-            {
-                CreateEnemyRandomized(&enemies);
-                CreateEnemyRandomized(&enemies);
-                CreateEnemyRandomized(&enemies);
-                CreateEnemyRandomized(&enemies);
-                CreateEnemyRandomized(&enemies);
-                CreateEnemyRandomized(&enemies);
-                CreateEnemyRandomized(&enemies);
-                CreateEnemyRandomized(&enemies);
-                CreateEnemyRandomized(&enemies);
-            }
-
-            if (IsKeyDown(KEY_R))
-            {
-                player.state = ALIVE;
-            }
-
-            if (time > gameState.timeToWin && player.state != DEAD)
-            {
-                Rectangle scoreBox = {SCREEN_WIDTH / 2 - 500, 600, 1000, 100};
-                DrawTextRec(GetFontDefault(), TextFormat("You won!"), scoreBox, 100, 10, 0, uicolor);
-            }
-        }
-
-        // Events
-        {
-            for (std::vector<Event>::iterator event = gameState.events.begin(); event != gameState.events.end(); ++event)
-            {
-                if (time > event->time && !event->flag)
-                {
-                    CreateEnemyRandomized(&enemies);
-                    CreateEnemyRandomized(&enemies);
-                    CreateEnemyRandomized(&enemies);
-                    CreateEnemyRandomized(&enemies);
-                    CreateEnemyRandomized(&enemies);
-                    CreateEnemyRandomized(&enemies);
-                    CreateEnemyRandomized(&enemies);
-                    CreateEnemyRandomized(&enemies);
-                    CreateEnemyRandomized(&enemies);
-                    event->flag = !event->flag;
-                }
-            }
-        }
+        gameCode.UpdateAndRender(&gameState);
     }
     CloseWindow();
 
