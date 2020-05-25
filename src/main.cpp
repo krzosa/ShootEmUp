@@ -1,6 +1,5 @@
 #include "include/raylib.h"
 #include "game.h"
-#include "entity.cpp"
 /* WIN32 */
 #define _X86_
 #include "libloaderapi.h"

@@ -1,6 +1,7 @@
 #include "include/raylib.h"
 #define RAYGUI_IMPLEMENTATION
 #include "include/raygui.h"
+#include "vector_math.h"
 #include "game.h"
 #include "entity.cpp"
 
@@ -13,12 +14,9 @@ void UpdateAndRender(GameState *gameState)
             gameState->events.push_back({(double)i, 5});
         }
         gameState->timeToWin = 23.0f;
-
         gameState->player = CreatePlayer();
-
         gameState->bullets = {};
         gameState->enemies = {};
-
         gameState->uicolor = {160, 160, 160, 200};
         gameState->initialized = 1;
         gameState->uiClosed = 0;

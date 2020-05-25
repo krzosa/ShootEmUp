@@ -1,8 +1,3 @@
-#include "include/raylib.h"
-#include "vector_math.h"
-#include <list>
-#include "game.h"
-
 static Entity CreatePlayer()
 {
     Entity player = {};
