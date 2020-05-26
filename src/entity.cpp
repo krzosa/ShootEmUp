@@ -1,4 +1,4 @@
-static Entity CreatePlayer()
+static Entity EntityPlayerCreate()
 {
     Entity player = {};
     {
@@ -12,46 +12,55 @@ static Entity CreatePlayer()
     return player;
 }
 
-static Entity CreateBullet(float posx, float posy, EntityType type)
+static Entity EntityBulletCreate(Vector2 pos)
 {
     unsigned char colorB = 120;
     unsigned char colorG = 150;
 
     Entity bullet = {};
     {
-        bullet.pos.x = posx;
-        bullet.pos.y = posy;
+        bullet.pos = pos;
         bullet.acceleration = {0, -1};
         bullet.color = {0, colorG, colorB, 255};
         bullet.size = {10, 10};
         bullet.speed = 10000;
         bullet.state = ALIVE;
-        bullet.type = type;
+        bullet.type = PLAYER_BULLET;
     }
     return bullet;
 }
 
-static void CreateEnemyRandomized(std::list<Entity> *enemies)
+static void EntityEnemyCreate(std::list<Entity> *enemies)
 {
-    float posx = GetRandomValue(-200, SCREEN_WIDTH + 200);
-    float speed = GetRandomValue(1000, 2000);
-    unsigned char color = GetRandomValue(50, 150);
-    float accelerationX = GetRandomValue(-1, 1);
-
     Entity enemy = {};
     {
         enemy.size = {(float)GetRandomValue(50, 100), (float)GetRandomValue(25, 50)};
-        enemy.color = {200, color, 0, 255};
-        enemy.acceleration = {accelerationX, 1};
-        enemy.speed = speed;
-        enemy.pos = {posx, -enemy.size.y};
+        enemy.color = {200, (uchar)GetRandomValue(50, 150), 0, 255};
+        enemy.acceleration = {(float)GetRandomValue(-1, 1), 1};
+        enemy.speed = 2000;
+        enemy.pos = {50, -enemy.size.y - 50};
         enemy.type = ENEMY;
     }
 
     enemies->push_front(enemy);
 }
 
-static void CreateDeathParticles(std::list<Entity> *list, int posx, int posy)
+static void EntityEnemyCreateRandomized(std::list<Entity> *enemies)
+{
+    Entity enemy = {};
+    {
+        enemy.size = {(float)GetRandomValue(50, 100), (float)GetRandomValue(25, 50)};
+        enemy.color = {200, (uchar)GetRandomValue(50, 150), 0, 255};
+        enemy.acceleration = {(float)GetRandomValue(-1, 1), 1};
+        enemy.speed = (float)GetRandomValue(1000, 2000);
+        enemy.pos = {(float)GetRandomValue(-200, SCREEN_WIDTH + 200), -enemy.size.y - 50};
+        enemy.type = ENEMY;
+    }
+
+    enemies->push_front(enemy);
+}
+
+static void EntitiesDeathParticlesCreate(std::list<Entity> *list, int posx, int posy)
 {
     for (int i = 1; i < 11; i++)
     {
@@ -125,6 +134,10 @@ static void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
         {
             player->acceleration.x = 1.0f;
         }
+        if (IsKeyDown(KEY_O))
+        {
+            bullets->push_back(EntityBulletCreate({player->pos.x + player->size.x / 2, player->pos.y}));
+        }
         player->acceleration = player->acceleration * player->speed;
 
         player->acceleration = player->acceleration - player->velocity * 8;
@@ -134,11 +147,6 @@ static void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
 
         player->pos.x = clampFloat(player->pos.x, 0, SCREEN_WIDTH - player->size.x);
         player->pos.y = clampFloat(player->pos.y, 0, SCREEN_HEIGHT - player->size.y);
-
-        if (IsKeyDown(KEY_O))
-        {
-            bullets->push_back(CreateBullet(player->pos.x + player->size.x / 2, player->pos.y, PLAYER_BULLET));
-        }
     }
     else
     {

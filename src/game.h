@@ -4,12 +4,24 @@
 
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
+typedef uint32_t uint32;
+typedef unsigned char uchar;
+
+enum SpawnSide
+{
+    UP,
+    DOWN,
+    RIGHT,
+    LEFT
+};
 
 struct Event
 {
     double time;
     int enemiesToSpawn;
-    bool flag;
+    SpawnSide spawnSide;
+    int difficulty;
+    bool happened;
 };
 
 enum EntityType

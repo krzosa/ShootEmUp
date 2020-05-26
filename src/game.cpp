@@ -7,6 +7,7 @@
 
 void UpdateAndRender(GameState *gameState)
 {
+    /* INITIALIZATION */
     if (!gameState->initialized)
     {
         for (int i = 0; i < 20; i++)
@@ -14,7 +15,7 @@ void UpdateAndRender(GameState *gameState)
             gameState->events.push_back({(double)i, 5});
         }
         gameState->timeToWin = 23.0f;
-        gameState->player = CreatePlayer();
+        gameState->player = EntityPlayerCreate();
         gameState->bullets = {};
         gameState->enemies = {};
         gameState->uicolor = {160, 160, 160, 200};
@@ -40,7 +41,7 @@ void UpdateAndRender(GameState *gameState)
         if (EntitiesCollide(*enemy, gameState->player) && gameState->player.state != DEAD)
         {
             gameState->player.state = DEAD;
-            CreateDeathParticles(&gameState->bullets, gameState->player.pos.x - gameState->player.size.x, gameState->player.pos.y - gameState->player.size.y);
+            EntitiesDeathParticlesCreate(&gameState->bullets, gameState->player.pos.x - gameState->player.size.x, gameState->player.pos.y - gameState->player.size.y);
         }
         if (enemy->state == DEAD)
             gameState->enemies.erase(enemy);
@@ -72,9 +73,6 @@ void UpdateAndRender(GameState *gameState)
             gameState->bullets.erase(bullet);
     }
 
-    // TraceLog(LOG_TRACE, "gameState->enemies size: %d", gameState->enemies.size());
-    // TraceLog(LOG_TRACE, "gameState->bullets size: %d", gameState->bullets.size());
-
     BeginDrawing();
     {
         ClearBackground(RAYWHITE);
@@ -98,9 +96,18 @@ void UpdateAndRender(GameState *gameState)
             DrawTextRec(GetFontDefault(), TextFormat("R to restart"), scoreBox, 100, 10, 0, gameState->uicolor);
         }
     }
+
+    /* DEBUG UI */
+    if (!gameState->uiClosed)
+    {
+        gameState->uiClosed = GuiWindowBox({0, 0, 100, 100}, "DEBUG");
+        GuiLabel({0, 0, 100, 100}, TextFormat("FPS: %d", GetFPS()));
+        GuiLabel({0, 10, 100, 100}, TextFormat("projectiles: %d", gameState->bullets.size()));
+        GuiLabel({0, 20, 100, 100}, TextFormat("enemies: %d", gameState->enemies.size()));
+    }
     EndDrawing();
 
-    // Debug Inputs
+    /* DEBUG INPUTS */
     {
         if (IsKeyPressed(KEY_F1))
         {
@@ -110,7 +117,7 @@ void UpdateAndRender(GameState *gameState)
         {
             for (int i = 0; i < 10; i++)
             {
-                CreateEnemyRandomized(&gameState->enemies);
+                EntityEnemyCreateRandomized(&gameState->enemies);
             }
         }
         if (IsKeyDown(KEY_R))
@@ -119,7 +126,7 @@ void UpdateAndRender(GameState *gameState)
         }
     }
 
-    // Events
+    /* EVENTS */
     {
         if (time > gameState->timeToWin && gameState->player.state != DEAD)
         {
@@ -129,22 +136,14 @@ void UpdateAndRender(GameState *gameState)
 
         for (std::vector<Event>::iterator event = gameState->events.begin(); event != gameState->events.end(); ++event)
         {
-            if (time > event->time && !event->flag)
+            if (time > event->time && !event->happened)
             {
                 for (int i = 0; i < event->enemiesToSpawn; i++)
                 {
-                    CreateEnemyRandomized(&gameState->enemies);
+                    EntityEnemyCreateRandomized(&gameState->enemies);
                 }
-                event->flag = !event->flag;
+                event->happened = !event->happened;
             }
         }
-    }
-
-    if (!gameState->uiClosed)
-    {
-        gameState->uiClosed = GuiWindowBox({0, 0, 100, 100}, "DEBUG");
-        GuiLabel({0, 0, 100, 100}, TextFormat("FPS: %d", GetFPS()));
-        GuiLabel({0, 10, 100, 100}, TextFormat("projectiles: %d", gameState->bullets.size()));
-        GuiLabel({0, 20, 100, 100}, TextFormat("enemies: %d", gameState->enemies.size()));
     }
 }
