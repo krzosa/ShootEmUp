@@ -7,7 +7,7 @@
 typedef uint32_t uint32;
 typedef unsigned char uchar;
 
-enum SpawnSide
+enum Direction
 {
     UP,
     DOWN,
@@ -19,9 +19,9 @@ struct Event
 {
     double time;
     int enemiesToSpawn;
-    SpawnSide spawnSide;
     int difficulty;
     bool happened;
+    Direction spawnSide;
 };
 
 enum EntityType
@@ -44,10 +44,10 @@ struct Entity
     Vector2 size;
     Vector2 velocity;
     Vector2 acceleration;
+    Color color;
+    float speed;
     EntityType type;
     EntityState state;
-    float speed;
-    Color color;
 };
 
 struct GameState

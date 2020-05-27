@@ -110,9 +110,6 @@ bool EntitiesCollide(Entity entity1, Entity entity2)
 static void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
 {
     float dtime = GetFrameTime();
-    if (IsKeyDown(KEY_P))
-        dtime = 0;
-
     if (entity->type == PLAYER)
     {
         Entity *player = entity;

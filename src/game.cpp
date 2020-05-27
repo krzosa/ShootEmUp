@@ -5,6 +5,22 @@
 #include "game.h"
 #include "entity.cpp"
 
+static double global_timer;
+static double renderTime = 0;
+static double updateTime = 0;
+static void StartTimer()
+{
+    global_timer = GetTime();
+}
+static void StopTimerGui(float y, char *text)
+{
+    GuiLabel({1100, y, 100, 100}, TextFormat("%s time: %f", text, (GetTime() - global_timer)));
+}
+static double StopTimer()
+{
+    return GetTime() - global_timer;
+}
+
 void UpdateAndRender(GameState *gameState)
 {
     /* INITIALIZATION */
@@ -24,7 +40,7 @@ void UpdateAndRender(GameState *gameState)
     }
 
     double time = GetTime();
-
+    StartTimer();
     if (gameState->player.state != DEAD)
         EntityUpdate(&gameState->player, &gameState->bullets);
 
@@ -35,6 +51,7 @@ void UpdateAndRender(GameState *gameState)
 
         if (!EntityIsOnScreen(&*enemy, SCREEN_WIDTH, SCREEN_HEIGHT))
         {
+
             enemy->state = DEAD;
         }
 
@@ -72,7 +89,8 @@ void UpdateAndRender(GameState *gameState)
         if (bullet->state == DEAD)
             gameState->bullets.erase(bullet);
     }
-
+    updateTime = StopTimer();
+    StartTimer();
     BeginDrawing();
     {
         ClearBackground(RAYWHITE);
@@ -95,17 +113,21 @@ void UpdateAndRender(GameState *gameState)
             Rectangle scoreBox = {SCREEN_WIDTH / 2 - 500, 600, 1000, 100};
             DrawTextRec(GetFontDefault(), TextFormat("R to restart"), scoreBox, 100, 10, 0, gameState->uicolor);
         }
+        /* DEBUG UI */
+        if (!gameState->uiClosed)
+        {
+            gameState->uiClosed = GuiWindowBox({0, 0, 200, 120}, "DEBUG");
+            GuiLabel({0, 0, 100, 100}, TextFormat("FPS: %d", GetFPS()));
+            GuiLabel({0, 10, 100, 100}, TextFormat("projectiles: %d", gameState->bullets.size()));
+            GuiLabel({0, 20, 100, 100}, TextFormat("enemies: %d", gameState->enemies.size()));
+            GuiLabel({0, 30, 100, 100}, TextFormat("Update time: %f", updateTime));
+            GuiLabel({0, 40, 100, 100}, TextFormat("Render time: %f", renderTime));
+            GuiLabel({0, 50, 100, 100}, TextFormat("Total: %f", renderTime + updateTime));
+        }
     }
 
-    /* DEBUG UI */
-    if (!gameState->uiClosed)
-    {
-        gameState->uiClosed = GuiWindowBox({0, 0, 100, 100}, "DEBUG");
-        GuiLabel({0, 0, 100, 100}, TextFormat("FPS: %d", GetFPS()));
-        GuiLabel({0, 10, 100, 100}, TextFormat("projectiles: %d", gameState->bullets.size()));
-        GuiLabel({0, 20, 100, 100}, TextFormat("enemies: %d", gameState->enemies.size()));
-    }
     EndDrawing();
+    renderTime = StopTimer();
 
     /* DEBUG INPUTS */
     {

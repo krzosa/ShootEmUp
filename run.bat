@@ -1,3 +1,3 @@
 cd bin
-game.exe
+ShootEmUp.exe
 cd ..
