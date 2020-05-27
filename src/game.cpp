@@ -3,40 +3,26 @@
 #include "include/raygui.h"
 #include "vector_math.h"
 #include "game.h"
+#include "config.cpp"
 #include "entity.cpp"
-
-static double global_timer;
-static double renderTime = 0;
-static double updateTime = 0;
-static void StartTimer()
-{
-    global_timer = GetTime();
-}
-static void StopTimerGui(float y, char *text)
-{
-    GuiLabel({1100, y, 100, 100}, TextFormat("%s time: %f", text, (GetTime() - global_timer)));
-}
-static double StopTimer()
-{
-    return GetTime() - global_timer;
-}
+#include "timer.cpp"
 
 void UpdateAndRender(GameState *gameState)
 {
     /* INITIALIZATION */
     if (!gameState->initialized)
     {
-        for (int i = 0; i < 20; i++)
-        {
-            gameState->events.push_back({(double)i, 5});
-        }
-        gameState->timeToWin = 23.0f;
-        gameState->player = EntityPlayerCreate();
+        gameState->score = 0;
         gameState->bullets = {};
         gameState->enemies = {};
-        gameState->uicolor = {160, 160, 160, 200};
-        gameState->initialized = 1;
+        InitEvents(&gameState->events);
+        gameState->timeToWin = config::time_to_win + GetTime();
+        gameState->player = EntityPlayerCreate();
+
         gameState->uiClosed = 0;
+        gameState->uiColor = {160, 160, 160, 200};
+        gameState->initialized = 1;
+        TraceLog(LOG_INFO, "GAMESTATE INITIALIZATION");
     }
 
     double time = GetTime();
@@ -101,17 +87,12 @@ void UpdateAndRender(GameState *gameState)
         EntityListDraw(&gameState->enemies);
 
         Rectangle scoreBox = {SCREEN_WIDTH / 2 - 50, 0, 300, 100};
-        DrawTextRec(GetFontDefault(), TextFormat("%d", gameState->score), scoreBox, 100, 10, 0, gameState->uicolor);
-
-        if (gameState->showFps)
-        {
-            DrawFPS(0, 0);
-        }
+        DrawTextRec(GetFontDefault(), TextFormat("%d", gameState->score), scoreBox, 100, 10, 0, gameState->uiColor);
 
         if (gameState->player.state == DEAD)
         {
             Rectangle scoreBox = {SCREEN_WIDTH / 2 - 500, 600, 1000, 100};
-            DrawTextRec(GetFontDefault(), TextFormat("R to restart"), scoreBox, 100, 10, 0, gameState->uicolor);
+            DrawTextRec(GetFontDefault(), TextFormat("R to restart"), scoreBox, 100, 10, 0, gameState->uiColor);
         }
         /* DEBUG UI */
         if (!gameState->uiClosed)
@@ -139,10 +120,14 @@ void UpdateAndRender(GameState *gameState)
         {
             for (int i = 0; i < 10; i++)
             {
-                EntityEnemyCreateRandomized(&gameState->enemies);
+                EntityEnemyCreateRandomized(&gameState->enemies, 1);
             }
         }
-        if (IsKeyDown(KEY_R))
+        if (IsKeyPressed(KEY_R) && gameState->player.state == DEAD)
+        {
+            gameState->initialized = 0;
+        }
+        else if (IsKeyPressed(KEY_R))
         {
             gameState->player.state = ALIVE;
         }
@@ -153,7 +138,7 @@ void UpdateAndRender(GameState *gameState)
         if (time > gameState->timeToWin && gameState->player.state != DEAD)
         {
             Rectangle scoreBox = {SCREEN_WIDTH / 2 - 500, 600, 1000, 100};
-            DrawTextRec(GetFontDefault(), TextFormat("You won!"), scoreBox, 100, 10, 0, gameState->uicolor);
+            DrawTextRec(GetFontDefault(), TextFormat("You won!"), scoreBox, 100, 10, 0, gameState->uiColor);
         }
 
         for (std::vector<Event>::iterator event = gameState->events.begin(); event != gameState->events.end(); ++event)
@@ -162,7 +147,7 @@ void UpdateAndRender(GameState *gameState)
             {
                 for (int i = 0; i < event->enemiesToSpawn; i++)
                 {
-                    EntityEnemyCreateRandomized(&gameState->enemies);
+                    EntityEnemyCreateRandomized(&gameState->enemies, event->difficulty);
                 }
                 event->happened = !event->happened;
             }

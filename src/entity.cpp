@@ -2,10 +2,10 @@ static Entity EntityPlayerCreate()
 {
     Entity player = {};
     {
-        player.pos = {600, 600};
-        player.size = {25, 25};
-        player.color = {0, 160, 200, 255};
-        player.speed = 7000.0f;
+        player.pos = config::player_position;
+        player.size = config::player_size;
+        player.color = config::player_color;
+        player.speed = config::player_speed_multiplier;
         player.type = PLAYER;
         player.state = ALIVE;
     }
@@ -21,9 +21,9 @@ static Entity EntityBulletCreate(Vector2 pos)
     {
         bullet.pos = pos;
         bullet.acceleration = {0, -1};
-        bullet.color = {0, colorG, colorB, 255};
-        bullet.size = {10, 10};
-        bullet.speed = 10000;
+        bullet.color = config::bullet_color;
+        bullet.size = config::bullet_size;
+        bullet.speed = config::bullet_speed_multiplier;
         bullet.state = ALIVE;
         bullet.type = PLAYER_BULLET;
     }
@@ -45,14 +45,14 @@ static void EntityEnemyCreate(std::list<Entity> *enemies)
     enemies->push_front(enemy);
 }
 
-static void EntityEnemyCreateRandomized(std::list<Entity> *enemies)
+static void EntityEnemyCreateRandomized(std::list<Entity> *enemies, float difficulty)
 {
     Entity enemy = {};
     {
         enemy.size = {(float)GetRandomValue(50, 100), (float)GetRandomValue(25, 50)};
         enemy.color = {200, (uchar)GetRandomValue(50, 150), 0, 255};
         enemy.acceleration = {(float)GetRandomValue(-1, 1), 1};
-        enemy.speed = (float)GetRandomValue(1000, 2000);
+        enemy.speed = (float)GetRandomValue(1000, 2000 * difficulty);
         enemy.pos = {(float)GetRandomValue(-200, SCREEN_WIDTH + 200), -enemy.size.y - 50};
         enemy.type = ENEMY;
     }

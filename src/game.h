@@ -19,9 +19,8 @@ struct Event
 {
     double time;
     int enemiesToSpawn;
-    int difficulty;
+    float difficulty;
     bool happened;
-    Direction spawnSide;
 };
 
 enum EntityType
@@ -52,15 +51,15 @@ struct Entity
 
 struct GameState
 {
-    bool initialized;
     std::vector<Event> events;
     std::list<Entity> bullets;
     std::list<Entity> enemies;
     Entity player;
-    Color uicolor;
-    bool uiClosed;
 
     double timeToWin;
-    bool showFps;
     unsigned int score;
+
+    Color uiColor;
+    bool uiClosed;
+    bool initialized;
 };
