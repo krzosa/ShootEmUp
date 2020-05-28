@@ -94,9 +94,9 @@ void UpdateAndRender(GameState *gameState)
         {
             gameState->initialized = 0;
         }
-        else if (IsKeyPressed(KEY_R))
+        else if (IsKeyPressed(KEY_K))
         {
-            gameState->player.state = ALIVE;
+            gameState->player.state = DEAD;
         }
     }
 
@@ -143,7 +143,7 @@ void UpdateAndRender(GameState *gameState)
                 SaveStorageValue(0, gameState->score);
                 gameState->highScore = gameState->score;
             }
-            DrawTextRec(GetFontDefault(), TextFormat("Highscore: %d, Restart 'R'", gameState->highScore), {SCREEN_WIDTH / 2 - 50, 0, 1000, 100}, 100, 10, 0, gameState->uiColor);
+            DrawTextRec(GetFontDefault(), TextFormat("Highscore: %d", gameState->highScore), {SCREEN_WIDTH / 2 - 150, 0, 1000, 100}, 100, 10, 0, gameState->uiColor);
             DrawTextRec(GetFontDefault(), TextFormat("Press R to restart", gameState->highScore), {SCREEN_WIDTH / 2 - 500, 600, 1100, 100}, 100, 10, 0, gameState->uiColor);
         }
         /* DEBUG UI */

@@ -47,6 +47,8 @@ struct Entity
     Vector2 acceleration;
     Color color;
     float speed;
+    int counter;
+    float timer;
     EntityType type;
     EntityState state;
 };

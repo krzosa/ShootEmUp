@@ -6,6 +6,7 @@ internal Entity EntityPlayerCreate()
         player.size = config::player_size;
         player.color = config::player_color;
         player.speed = config::player_speed_multiplier;
+        player.timer = 0;
         player.type = PLAYER;
         player.state = ALIVE;
     }
@@ -131,9 +132,14 @@ internal void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
         {
             player->acceleration.x = 1.0f;
         }
-        if (IsKeyDown(KEY_O))
+        if (IsKeyDown(KEY_O) && player->timer < 0.1)
         {
             bullets->push_back(EntityBulletCreate({player->pos.x + player->size.x / 2, player->pos.y}));
+            player->timer += GetFrameTime();
+        }
+        else if (IsKeyUp(KEY_O) && player->timer > 0)
+        {
+            player->timer -= GetFrameTime();
         }
         player->acceleration = player->acceleration * player->speed;
 

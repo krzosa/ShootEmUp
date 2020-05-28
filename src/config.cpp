@@ -11,7 +11,7 @@ namespace config
 
     constexpr static Vector2 bullet_size = {10, 10};
     constexpr static Color bullet_color = {0, 120, 150, 255};
-    constexpr static float bullet_speed_multiplier = 20000;
+    constexpr static float bullet_speed_multiplier = 50000;
 
     constexpr static float time_to_win = 59.0f;
 
