@@ -13,11 +13,11 @@ namespace config
     constexpr static Color bullet_color = {0, 120, 150, 255};
     constexpr static float bullet_speed_multiplier = 20000;
 
-    constexpr static float time_to_win = 34.0f;
+    constexpr static float time_to_win = 59.0f;
 
 } // namespace config
 
-static void InitEvents(std::vector<Event> *events)
+internal void InitEvents(std::vector<Event> *events)
 {
     double startTime = GetTime();
     /* {time, enemiesToSpawn, difficulty}*/

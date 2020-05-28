@@ -21,7 +21,7 @@ struct win32_game_code
     bool isValid;
 };
 
-static win32_game_code Win32LoadGameCode(char *mainDllPath, char *tempDllPath)
+internal win32_game_code Win32LoadGameCode(char *mainDllPath, char *tempDllPath)
 {
     win32_game_code Result;
     Result.lastDllWriteTime = GetFileModTime(tempDllPath);
@@ -49,7 +49,7 @@ static win32_game_code Win32LoadGameCode(char *mainDllPath, char *tempDllPath)
 }
 
 /* Unloads the dll and nulls the pointers to functions from the dll */
-static void Win32UnloadGameCode(win32_game_code *GameCode)
+internal void Win32UnloadGameCode(win32_game_code *GameCode)
 {
     if (GameCode->library)
     {
@@ -85,7 +85,7 @@ int main(void)
 
     GameState gameState = {};
 
-    SetTargetFPS(60);
+    SetTargetFPS(120);
     while (!WindowShouldClose())
     {
         long dllFileWriteTime = GetFileModTime(mainDllPath);

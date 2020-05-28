@@ -6,6 +6,8 @@
 #define SCREEN_HEIGHT 720
 typedef uint32_t uint32;
 typedef unsigned char uchar;
+// function internal to the file, obj
+#define internal static
 
 enum Direction
 {
@@ -57,7 +59,8 @@ struct GameState
     Entity player;
 
     double timeToWin;
-    unsigned int score;
+    int score;
+    int highScore;
 
     Color uiColor;
     bool uiClosed;

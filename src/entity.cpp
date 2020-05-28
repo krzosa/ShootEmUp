@@ -1,4 +1,4 @@
-static Entity EntityPlayerCreate()
+internal Entity EntityPlayerCreate()
 {
     Entity player = {};
     {
@@ -12,7 +12,7 @@ static Entity EntityPlayerCreate()
     return player;
 }
 
-static Entity EntityBulletCreate(Vector2 pos)
+internal Entity EntityBulletCreate(Vector2 pos)
 {
     unsigned char colorB = 120;
     unsigned char colorG = 150;
@@ -30,7 +30,7 @@ static Entity EntityBulletCreate(Vector2 pos)
     return bullet;
 }
 
-static void EntityEnemyCreate(std::list<Entity> *enemies)
+internal void EntityEnemyCreate(std::list<Entity> *enemies)
 {
     Entity enemy = {};
     {
@@ -45,7 +45,7 @@ static void EntityEnemyCreate(std::list<Entity> *enemies)
     enemies->push_front(enemy);
 }
 
-static void EntityEnemyCreateRandomized(std::list<Entity> *enemies, float difficulty)
+internal void EntityEnemyCreateRandomized(std::list<Entity> *enemies, float difficulty)
 {
     Entity enemy = {};
     {
@@ -60,7 +60,7 @@ static void EntityEnemyCreateRandomized(std::list<Entity> *enemies, float diffic
     enemies->push_front(enemy);
 }
 
-static void EntitiesDeathParticlesCreate(std::list<Entity> *list, int posx, int posy)
+internal void EntitiesDeathParticlesCreate(std::list<Entity> *list, int posx, int posy)
 {
     for (int i = 1; i < 11; i++)
     {
@@ -85,7 +85,7 @@ static void EntitiesDeathParticlesCreate(std::list<Entity> *list, int posx, int 
     }
 }
 
-static bool EntityIsOnScreen(Entity *entity, int screenWidth, int screenHeight)
+internal bool EntityIsOnScreen(Entity *entity, int screenWidth, int screenHeight)
 {
     int padding = 200;
 
@@ -107,7 +107,7 @@ bool EntitiesCollide(Entity entity1, Entity entity2)
     return collision;
 }
 
-static void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
+internal void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
 {
     float dtime = GetFrameTime();
     if (entity->type == PLAYER)
@@ -160,12 +160,12 @@ static void EntityUpdate(Entity *entity, std::list<Entity> *bullets)
     }
 }
 
-static void EntityDraw(Entity *entity)
+internal void EntityDraw(Entity *entity)
 {
     DrawRectangle(entity->pos.x, entity->pos.y, entity->size.x, entity->size.y, entity->color);
 }
 
-static void EntityListDraw(std::list<Entity> *entities)
+internal void EntityListDraw(std::list<Entity> *entities)
 {
     for (std::list<Entity>::iterator it = entities->begin(); it != entities->end(); ++it)
     {
